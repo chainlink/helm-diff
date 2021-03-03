@@ -1,7 +1,13 @@
 package cmd
 
 import (
-	"github.com/mgutz/ansi"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+
+	"github.com/databus23/helm-diff/v3/diff"
+	"github.com/databus23/helm-diff/v3/manifest"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +32,7 @@ The Helm Diff Plugin
 `
 
 // New creates a new cobra client
-func New() *cobra.Command {
+/*func New() *cobra.Command {
 
 	chartCommand := newChartCommand()
 
@@ -60,5 +66,42 @@ func New() *cobra.Command {
 		releaseCmd(),
 	)
 	cmd.SetHelpCommand(&cobra.Command{}) // Disable the help command
+	return cmd
+}*/
+
+func New() *cobra.Command {
+
+	cmd := &cobra.Command{
+		Use:   "diff",
+		Short: "Show manifest differences",
+		//Long:  rootCmdLongUsage,
+		//Alias root command to chart subcommand
+		//Args: chartCommand.Args,
+		Run: func(cmd *cobra.Command, args []string) {
+			file1 := args[0]
+			file2 := args[1]
+
+			content1, err := ioutil.ReadFile(file1)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			content2, err := ioutil.ReadFile(file2)
+			if err != nil {
+				log.Fatal(err)
+			}
+			contentStr1 := string(content1)
+			contentStr2 := string(content2)
+
+			diff1 := manifest.Parse(contentStr1, "default")
+			diff2 := manifest.Parse(contentStr2, "default")
+
+			seenAnyChanges := diff.Manifests(diff1, diff2, []string{}, true, -1, "yaml", os.Stdout)
+
+			fmt.Println(seenAnyChanges)
+
+		},
+	}
+
 	return cmd
 }
